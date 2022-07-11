@@ -181,6 +181,7 @@
 			add_overlay(image('icons/obj/guns/gui.dmi',"safety[safety()]"))
 	if(safety_icon)
 		add_overlay(image(icon,"[safety_icon][safety()]"))
+	update_held_icon()
 
 //Checks whether a given mob can use the gun
 //Any checks that shouldn't result in handle_click_empty() being called if they fail should go here.
