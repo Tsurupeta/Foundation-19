@@ -140,3 +140,4 @@ for fileName in glob.glob(os.path.join(args.ymlDir, "*.yml")):
 
     with open(monthFile, 'w', encoding='utf-8') as f:
         yaml.dump(currentEntries, f, default_flow_style=False)
+        print("Dumped")
