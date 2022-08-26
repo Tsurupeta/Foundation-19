@@ -371,7 +371,7 @@
 	else if(IS_TRUSTED_PLAYER(C.ckey))
 		badge_name = "Trusted"
 	if(badge_name)
-		return icon2html(icon('./icons/chatbadges.dmi', badge_name), world, extra_classes="text_tag")
+		return icon2html(icon('./icons/chatbadges.dmi', badge_name), world, extra_classes="badge_tag")
 	return null
 
 /proc/contains_az09(input)
