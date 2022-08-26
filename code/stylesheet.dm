@@ -16,8 +16,8 @@ em						{font-style: normal;font-weight: bold;}
 
 /* OOC */
 .ooc					{font-weight: bold;}
-.ooc img.text_tag		{width: 2.5em; height: 1.25em;}
-.ooc img.badge_tag		{width: 1.25em; height: 1.25em;}
+.ooc img.text_tag		{width: 32px; height: 16px;}
+.ooc img.badge_tag		{width: 16px; height: 16px;}
 
 .ooc .everyone			{color: #002eb8;}
 .ooc .looc				{color: #3a7496;}
