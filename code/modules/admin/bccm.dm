@@ -21,7 +21,7 @@ SUBSYSTEM_DEF(bccm)
 	var/is_active = FALSE
 	var/error_counter = 0
 
-	var/list/client_queue = new
+	var/list/client/client_queue = new
 
 /datum/controller/subsystem/bccm/Initialize(timeofday)
 	if(!config.bccm)
@@ -37,7 +37,8 @@ SUBSYSTEM_DEF(bccm)
 /datum/controller/subsystem/bccm/proc/Toggle(mob/user)
 	if (!initialized && user)
 		return
-	if(!is_active && !establish_db_connection())
+
+	if(!is_active && !SSdbcore.Connect())
 		log_debug("BCCM could not be loaded because the DB connection could not be established.")
 		return
 
@@ -52,7 +53,7 @@ SUBSYSTEM_DEF(bccm)
 	return is_active
 
 /datum/controller/subsystem/bccm/proc/CheckDBCon()
-	if(is_active && establish_db_connection())
+	if(is_active && SSdbcore.Connect())
 		return TRUE
 
 	is_active = FALSE
@@ -122,6 +123,7 @@ SUBSYSTEM_DEF(bccm)
 
 /datum/controller/subsystem/bccm/proc/LoadCachedData(ip)
 	ASSERT(istext(ip))
+
 
 /datum/controller/subsystem/bccm/proc/CacheData(ip, raw_response)
 	ASSERT(istext(ip))
