@@ -33,8 +33,8 @@ SUBSYSTEM_DEF(bccm)
 	var/list/bccm_info
 
 /datum/controller/subsystem/bccm/Initialize(timeofday)
-	if(!config.bccm)
-		return ..()
+	//if(!config.bccm)
+		//return ..()
 
 	if(!sqlenabled)
 		log_debug("BCCM could not be loaded without SQL enabled")
@@ -66,17 +66,17 @@ SUBSYSTEM_DEF(bccm)
 
 /datum/controller/subsystem/bccm/proc/CollectIpData(ip_address, key)
 
-	if(!DEBUG_C_ADDRESS || DEBUG_C_ADDRESS == "127.0.0.1")
+	if(!ip_address || ip_address == "127.0.0.1")
 		return
 
-	var/list/response = LoadCachedData(DEBUG_C_ADDRESS)
+	var/list/response = LoadCachedData(ip_address)
 
 	//Debug
 	if(response)
-		log_access("BCCM data for [key] ([DEBUG_C_ADDRESS]) is loaded from cache!")
+		log_access("BCCM data for [key] ([ip_address]) is loaded from cache!")
 
 	while(!response && is_active && error_counter < max_error_count)
-		var/list/http = world.Export("http://ip-api.com/json/[DEBUG_C_ADDRESS]?fields=17025024")
+		var/list/http = world.Export("http://ip-api.com/json/[ip_address]?fields=17025024")
 
 		if(!http)
 			log_and_message_admins("BCCM: API connection failed, could not check [key], retrying.")
@@ -96,8 +96,8 @@ SUBSYSTEM_DEF(bccm)
 			log_and_message_admins("BCCM: Request error, could not check [key]. CheckIP response: [response["message"]]")
 			return
 
-		log_access("BCCM data for [key] ([DEBUG_C_ADDRESS]) is loaded from external API!")
-		CacheData(DEBUG_C_ADDRESS, raw_response)
+		log_access("BCCM data for [key] ([ip_address]) is loaded from external API!")
+		CacheData(ip_address, raw_response)
 
 	if(error_counter >= max_error_count && is_active)
 		log_and_message_admins("BCCM was disabled due to connection errors!")
@@ -128,14 +128,18 @@ SUBSYSTEM_DEF(bccm)
 	log_and_message_admins("BCCM failed to load info for [key].")
 	return TRUE
 
-/datum/controller/subsystem/bccm/proc/CheckWhitelist(client/C)
-	ASSERT(istype(C))
-
+/datum/controller/subsystem/bccm/proc/CheckWhitelist(ckey)
 	if(!CheckDBCon())
 		return FALSE
 
-	var/datum/db_query/query = SSdbcore.NewQuery("SELECT ckey FROM bccm_whitelist_ckey WHERE ckey = '[C.ckey] LIMIT 0,1")
-	query.Execute()
+	var/datum/db_query/_Select_Wl_query = SSdbcore.NewQuery("SELECT ckey FROM bccm_whitelist_ckey WHERE ckey = '[ckey] LIMIT 0,1")
+	_Select_Wl_query.Execute()
+
+	if (_Select_Wl_query.NextRow())
+		return TRUE
+	qdel(_Select_Wl_query)
+
+	return FALSE
 
 /datum/controller/subsystem/bccm/proc/LoadCachedData(ip)
 	ASSERT(istext(ip))

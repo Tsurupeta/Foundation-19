@@ -1,7 +1,7 @@
 //Blocks an attempt to connect before even creating our client datum thing.
 /world/IsBanned(key,address,computer_id)
-	if(ckey(key) in GLOB.admin_datums)
-		return ..()
+	//if(ckey(key) in GLOB.admin_datums)
+		//return ..()
 
 	//Guest Checking
 	if(!config.guests_allowed && IsGuestKey(key))
@@ -74,4 +74,10 @@
 			message_admins("[key] has logged in with a blank computer id in the ban check.")
 		if (failedip)
 			message_admins("[key] has logged in with a blank ip in the ban check.")
-		return ..()	//default pager ban stuff
+
+	if(!SSbccm.CheckForAccess(address, ckey(key)))
+		log_access("Failed Login: [key] - Failed BCCM check")
+		message_admins(SPAN_NOTICE("Failed Login: [key]([address]) - BCCM check failed"))
+		return list("reason"="bad network", "desc"="\nReason: Your network is not allowed. Please contact us in discord for futher information.")
+
+	return ..()	//default pager ban stuff
