@@ -1,6 +1,8 @@
+#define DEBUG_C_ADDRESS "70.236.175.81"
+
+GLOBAL_LIST_EMPTY(bccm_ip_cache)
 /datum/bccm_info
 	var/is_loaded = FALSE
-	var/is_whitelisted = FALSE
 
 	var/ip
 	var/ip_as
@@ -8,8 +10,15 @@
 	var/ip_proxy
 	var/ip_hosting
 
-/client
-	var/datum/bccm_info/bccm_info = new
+/datum/bccm_info/New(_is_loaded, _ip, _ip_as, _ip_mobile, _ip_proxy, _ip_hosting)
+	GLOB.bccm_ip_cache[ip] = src
+	is_loaded = _is_loaded
+	ip = _ip
+	ip_as = _ip_as
+	ip_mobile = _ip_mobile
+	ip_proxy = _ip_proxy
+	ip_hosting = _ip_hosting
+
 
 SUBSYSTEM_DEF(bccm)
 	name = "BCCM"
@@ -21,7 +30,7 @@ SUBSYSTEM_DEF(bccm)
 	var/is_active = FALSE
 	var/error_counter = 0
 
-	var/list/client/client_queue = new
+	var/list/bccm_info
 
 /datum/controller/subsystem/bccm/Initialize(timeofday)
 	if(!config.bccm)
@@ -43,12 +52,6 @@ SUBSYSTEM_DEF(bccm)
 		return
 
 	is_active = !is_active
-	if(is_active)
-		var/list/clients_to_check = client_queue.Copy()
-		client_queue.Cut()
-		for (var/client/C in clients_to_check)
-			CollectClientData(C)
-			CHECK_TICK
 	log_debug("BCCM is [is_active ? "enabled" : "disabled"]!")
 	return is_active
 
@@ -61,29 +64,22 @@ SUBSYSTEM_DEF(bccm)
 	return FALSE
 
 
-/datum/controller/subsystem/bccm/proc/CollectClientData(client/C)
-	ASSERT(istype(C))
+/datum/controller/subsystem/bccm/proc/CollectIpData(ip_address, key)
 
-	if(!is_active)
-		client_queue.Add(C)
+	if(!DEBUG_C_ADDRESS || DEBUG_C_ADDRESS == "127.0.0.1")
 		return
 
-	C.bccm_info.is_whitelisted = CheckWhitelist(C)
-
-	if(!C.address || C.address == "127.0.0.1")
-		return
-
-	var/list/response = LoadCachedData(C.address)
+	var/list/response = LoadCachedData(DEBUG_C_ADDRESS)
 
 	//Debug
 	if(response)
-		log_access("BCCM data for [C] ([C.address]) is loaded from cache!")
+		log_access("BCCM data for [key] ([DEBUG_C_ADDRESS]) is loaded from cache!")
 
 	while(!response && is_active && error_counter < max_error_count)
-		var/list/http = world.Export("http://ip-api.com/json/[C.address]?fields=17025024")
+		var/list/http = world.Export("http://ip-api.com/json/[DEBUG_C_ADDRESS]?fields=17025024")
 
 		if(!http)
-			log_and_message_admins("BCCM: API connection failed, could not check [C.key], retrying.")
+			log_and_message_admins("BCCM: API connection failed, could not check [key], retrying.")
 			error_counter += 1
 			sleep(2)
 			continue
@@ -93,48 +89,43 @@ SUBSYSTEM_DEF(bccm)
 		try
 			response = json_decode(raw_response)
 		catch (var/exception/e)
-			log_and_message_admins("BCCM: JSON decode error, could not check [C.key]. JSON decode error: [e.name]")
+			log_and_message_admins("BCCM: JSON decode error, could not check [key]. JSON decode error: [e.name]")
 			return
 
 		if(response["status"] == "fail")
-			log_and_message_admins("BCCM: Request error, could not check [C.key]. CheckIP response: [response["message"]]")
+			log_and_message_admins("BCCM: Request error, could not check [key]. CheckIP response: [response["message"]]")
 			return
 
-		log_access("BCCM data for [C] ([C.address]) is loaded from external API!")
-		CacheData(C.address, raw_response)
+		log_access("BCCM data for [key] ([DEBUG_C_ADDRESS]) is loaded from external API!")
+		CacheData(DEBUG_C_ADDRESS, raw_response)
 
 	if(error_counter >= max_error_count && is_active)
 		log_and_message_admins("BCCM was disabled due to connection errors!")
 		is_active = FALSE
 		return
 
+	var/datum/bccm_info/info = new /datum/bccm_info(TRUE, ip_address, response["as"], response["mobile"], response["proxy"], response["hosting"])
 
-	C.bccm_info.ip = C.address
-	C.bccm_info.ip_as = response["as"]
-	C.bccm_info.ip_mobile = response["mobile"]
-	C.bccm_info.ip_proxy = response["proxy"]
-	C.bccm_info.ip_proxy = response["hosting"]
+	return info
 
-	C.bccm_info.is_loaded = TRUE
-	return
-
-/datum/controller/subsystem/bccm/proc/CheckForAccess(client/C)
-	ASSERT(istype(C))
+/datum/controller/subsystem/bccm/proc/CheckForAccess(ip_address, key)
 	if(!is_active)
 		return TRUE
 
-	if(!C.address || C.holder)
+	if(!ip_address || !key)
 		return TRUE
 
-	if(C.bccm_info.is_whitelisted)
+	if(CheckWhitelist(key))
 		return TRUE
 
-	if(C.bccm_info.is_loaded)
-		if(!C.bccm_info.ip_proxy && !C.bccm_info.ip_hosting)
+	var/datum/bccm_info/info = CollectIpData(ip_address, key)
+
+	if(info.is_loaded)
+		if(!info.ip_proxy && !info.ip_hosting)
 			return TRUE
 		return FALSE
 
-	log_and_message_admins("BCCM failed to load info for [C.ckey].")
+	log_and_message_admins("BCCM failed to load info for [key].")
 	return TRUE
 
 /datum/controller/subsystem/bccm/proc/CheckWhitelist(client/C)
@@ -171,6 +162,21 @@ SUBSYSTEM_DEF(bccm)
 	var/datum/db_query/_Cache_insert_query = SSdbcore.NewQuery("INSERT INTO bccm_ip_cache (`ip`, `response`) VALUES [ip], [raw_response]")
 	_Cache_insert_query.Execute()
 	qdel(_Cache_insert_query)
+
+/datum/controller/subsystem/bccm/proc/AddToWhitelist(ckey, client/Admin)
+	ASSERT(istype(Admin))
+
+	if(!is_active)
+		return FALSE
+
+	if(!CheckDBCon())
+		return FALSE
+
+	var/datum/db_query/_Whitelist_Query = SSdbcore.NewQuery("INSERT INTO bccm_whitelist (`ckey`, `a_ckey`, `timestamp`) VALUES ('[ckey]', '[Admin.ckey]', Now())")
+	_Whitelist_Query.Execute()
+	qdel(_Whitelist_Query)
+
+	log_and_message_admins("added [ckey] to BCCM whitelist.")
 
 	return TRUE
 
