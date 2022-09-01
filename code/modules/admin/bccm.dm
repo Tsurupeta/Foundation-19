@@ -85,7 +85,7 @@ SUBSYSTEM_DEF(bccm)
 	if(!CheckDBCon())
 		return
 
-	C.bccm_info.is_whitelisted = CheckWhitelist(C)
+	C.bccm_info.is_whitelisted = CheckWhitelist(C.ckey)
 
 	if(!_ip_addr || _ip_addr == "127.0.0.1")
 		return
@@ -168,15 +168,13 @@ SUBSYSTEM_DEF(bccm)
 	log_and_message_admins("BCCM failed to load info for [C.ckey].")
 	return TRUE
 
-/datum/controller/subsystem/bccm/proc/CheckWhitelist(client/C)
-	ASSERT(istype(C))
-
+/datum/controller/subsystem/bccm/proc/CheckWhitelist(ckey)
 	. = FALSE
 
 	if(!CheckDBCon())
 		return
 
-	var/datum/db_query/query = SSdbcore.NewQuery("SELECT ckey FROM bccm_whitelist WHERE ckey = '[C.ckey]'")
+	var/datum/db_query/query = SSdbcore.NewQuery("SELECT ckey FROM bccm_whitelist WHERE ckey = '[ckey]'")
 	query.Execute()
 
 	if(query.NextRow())
@@ -251,6 +249,21 @@ SUBSYSTEM_DEF(bccm)
 
 	return TRUE
 
+/datum/controller/subsystem/bccm/proc/RemoveFromWhitelist(ckey)
+	if(!CheckDBCon())
+		return FALSE
+
+	if(!CheckWhitelist(ckey))
+		return
+
+	var/datum/db_query/_Whitelist_Query = SSdbcore.NewQuery("DELETE FROM bccm_whitelist WHERE `ckey` = '[ckey]'")
+	_Whitelist_Query.Execute()
+	qdel(_Whitelist_Query)
+
+	log_and_message_admins("removed [ckey] from BCCM whitelist.")
+
+	return TRUE
+
 /datum/controller/subsystem/bccm/proc/AddASNban(ip, client/Admin)
 	if(!CheckDBCon())
 		return
@@ -281,6 +294,41 @@ SUBSYSTEM_DEF(bccm)
 		log_and_message_admins(SPAN_NOTICE("BCCM: Failed Login: [C.key]/[C.ckey]([C.address])([C.computer_id]) failed to pass ASN ban check."))
 		qdel(C)
 		return
+
+/datum/controller/subsystem/bccm/Topic(href, href_list)
+
+/datum/controller/subsystem/bccm/proc/WhitelistPanel(ckey = null, a_ckey = null)
+	if(!usr.client)
+		return
+
+	if(!check_rights(R_BAN))
+		return
+
+	if(!SSdbcore.Connect())
+		to_chat(usr, "<span class='warning'>Failed to establish database connection</span>")
+		return
+
+	var/output = "<!doctype html><html lang=\"en\"><head><meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\"><meta charset=\"utf-8\"><title>BCCM Whitelist panel</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\"><link href=\"css/bootstrap-ie8.css\" rel=\"stylesheet\"><script src=\"https://cdn.jsdelivr.net/g/html5shiv@3.7.3\"></script><style>label{font-size: 16px;}h3{font-size: 20px;}</style></head>"
+
+	output += "<div class=\"container\"><h3>BCCM Whitelist panel</h3>"
+	output += "<form method='GET' action='?src=\ref[src]'>"
+	output += "<input type='hidden' name='src' value='\ref[src]'>"
+	output += "<table width='100%'><tr>"
+	output += "<td width='65%'><div class=\"form-group\"><label for=\"bccmaddckey\">Ckey</label><input type='text' name='bccmaddckey'class=\"form-control form-control-sm\" id=\"bccmaddckey\"></div></td>"
+	output += "<div class=\"row\"><div class=\"col-lg-3\"><input type='submit' class=\"btn btn-danger\" value='Add ban'></div></div></div></form>"
+
+
+
+		dat += text("<tr><td><A href='?src=[ref];unbanf=[key][id]'>(U)</A><A href='?src=[ref];unbane=[key][id]'>(E)</A> Key: <B>[key]</B></td><td>ComputerID: <B>[id]</B></td><td>IP: <B>[ip]</B></td><td> [expiry]</td><td>(By: [by])</td><td>(Reason: [reason])</td></tr>")
+
+	dat += "</table>"
+	dat = "<HR><B>Bans:</B> <FONT COLOR=blue>(U) = Unban , (E) = Edit Ban</FONT> - <FONT COLOR=green>([count] Bans)</FONT><HR><table border=1 rules=all frame=void cellspacing=0 cellpadding=3 >[dat]"
+	show_browser(usr, dat, "window=unbanp;size=875x400")
+
+	if(ckey || a_ckey)
+		output += "test"
+
+	show_browser(usr, output,"window=bccmwhitelist;size=500x300")
 
 /client/proc/BCCM_toggle()
 	set category = "Server"
@@ -314,3 +362,9 @@ SUBSYSTEM_DEF(bccm)
 	var/ip_input = sql_sanitize_text(input("Input IP address, ASN provider of which you want to ban."))
 	if(ip_input && istext(ip_input))
 		SSbccm.AddASNban(ip_input, src)
+
+/client/proc/BCCM_WhitelistPanel()
+	set category = "Server"
+	set name = "BCCM WL Panel"
+
+	SSbccm.WhitelistPanel()

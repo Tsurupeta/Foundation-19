@@ -103,7 +103,8 @@ var/list/admin_verbs_ban = list(
 	/client/proc/jobbans,
 	/client/proc/ban_panel,
 	/client/proc/BCCM_toggle,
-	/client/proc/BCCM_whitelist
+	/client/proc/BCCM_whitelist,
+	/client/proc/BCCM_WhitelistPanel
 	)
 var/list/admin_verbs_sounds = list(
 	/client/proc/play_local_sound,
