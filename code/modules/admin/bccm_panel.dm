@@ -2,6 +2,13 @@
 	set category = "Server"
 	set name = "BCCM WL Panel"
 
+	if(!check_rights(R_BAN))
+		return
+
+	if(!SSdbcore.Connect())
+		to_chat(usr, SPAN_WARNING("Failed to establish database connection"))
+		return
+
 	new /datum/bccm_wl_panel(src)
 
 /datum/bccm_wl_panel
@@ -10,6 +17,9 @@
 /datum/bccm_wl_panel/New(user)
 	if(user)
 		setup(user)
+	else
+		qdel(src)
+		return
 
 /datum/bccm_wl_panel/proc/setup(user) // client or mob
 	if(istype(user, /client))
@@ -18,6 +28,15 @@
 	else
 		var/mob/user_mob = user
 		holder = user_mob.client
+
+	if(!check_rights(R_BAN, TRUE, holder))
+		qdel(src)
+		return
+
+	if(!SSdbcore.Connect())
+		to_chat(holder, SPAN_WARNING("Failed to establish database connection"))
+		qdel(src)
+		return
 
 	tgui_interact(holder.mob)
 
