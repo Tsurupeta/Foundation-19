@@ -297,39 +297,6 @@ SUBSYSTEM_DEF(bccm)
 
 /datum/controller/subsystem/bccm/Topic(href, href_list)
 
-/datum/controller/subsystem/bccm/proc/WhitelistPanel(ckey = null, a_ckey = null)
-	if(!usr.client)
-		return
-
-	if(!check_rights(R_BAN))
-		return
-
-	if(!SSdbcore.Connect())
-		to_chat(usr, "<span class='warning'>Failed to establish database connection</span>")
-		return
-
-	var/output = "<!doctype html><html lang=\"en\"><head><meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\"><meta charset=\"utf-8\"><title>BCCM Whitelist panel</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\"><link href=\"css/bootstrap-ie8.css\" rel=\"stylesheet\"><script src=\"https://cdn.jsdelivr.net/g/html5shiv@3.7.3\"></script><style>label{font-size: 16px;}h3{font-size: 20px;}</style></head>"
-
-	output += "<div class=\"container\"><h3>BCCM Whitelist panel</h3>"
-	output += "<form method='GET' action='?src=\ref[src]'>"
-	output += "<input type='hidden' name='src' value='\ref[src]'>"
-	output += "<table width='100%'><tr>"
-	output += "<td width='65%'><div class=\"form-group\"><label for=\"bccmaddckey\">Ckey</label><input type='text' name='bccmaddckey'class=\"form-control form-control-sm\" id=\"bccmaddckey\"></div></td>"
-	output += "<div class=\"row\"><div class=\"col-lg-3\"><input type='submit' class=\"btn btn-danger\" value='Add ban'></div></div></div></form>"
-
-
-
-		dat += text("<tr><td><A href='?src=[ref];unbanf=[key][id]'>(U)</A><A href='?src=[ref];unbane=[key][id]'>(E)</A> Key: <B>[key]</B></td><td>ComputerID: <B>[id]</B></td><td>IP: <B>[ip]</B></td><td> [expiry]</td><td>(By: [by])</td><td>(Reason: [reason])</td></tr>")
-
-	dat += "</table>"
-	dat = "<HR><B>Bans:</B> <FONT COLOR=blue>(U) = Unban , (E) = Edit Ban</FONT> - <FONT COLOR=green>([count] Bans)</FONT><HR><table border=1 rules=all frame=void cellspacing=0 cellpadding=3 >[dat]"
-	show_browser(usr, dat, "window=unbanp;size=875x400")
-
-	if(ckey || a_ckey)
-		output += "test"
-
-	show_browser(usr, output,"window=bccmwhitelist;size=500x300")
-
 /client/proc/BCCM_toggle()
 	set category = "Server"
 	set name = "Toggle BCCM"
@@ -363,8 +330,4 @@ SUBSYSTEM_DEF(bccm)
 	if(ip_input && istext(ip_input))
 		SSbccm.AddASNban(ip_input, src)
 
-/client/proc/BCCM_WhitelistPanel()
-	set category = "Server"
-	set name = "BCCM WL Panel"
 
-	SSbccm.WhitelistPanel()
