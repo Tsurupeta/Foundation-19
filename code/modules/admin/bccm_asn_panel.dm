@@ -4,11 +4,11 @@
 
 	if(!check_rights(R_BAN))
 		return
-	/*
+
 	if(!SSdbcore.Connect())
 		to_chat(usr, SPAN_WARNING("Failed to establish database connection"))
 		return
-	*/
+
 
 	new /datum/bccm_asn_panel(src)
 
@@ -33,12 +33,11 @@
 	if(!check_rights(R_BAN, TRUE, holder))
 		qdel(src)
 		return
-	/*
+
 	if(!SSdbcore.Connect())
 		to_chat(holder, SPAN_WARNING("Failed to establish database connection"))
 		qdel(src)
 		return
-	*/
 
 	tgui_interact(holder.mob)
 
