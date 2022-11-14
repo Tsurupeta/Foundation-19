@@ -204,8 +204,19 @@ var/list/slot_equipment_priority = list( \
 
 //Drops the item in our active hand. TODO: rename this to drop_active_hand or something
 /mob/proc/drop_item(var/atom/Target)
-	if(hand)	return drop_l_hand(Target)
-	else		return drop_r_hand(Target)
+	var/obj/item/item_dropped = null
+	if(hand)
+		item_dropped = l_hand
+		. = drop_l_hand(Target)
+	else
+		item_dropped = r_hand
+		. = drop_r_hand(Target)
+	if(istype(item_dropped) && !QDELETED(item_dropped))
+		handle_post_dropped(item_dropped)
+
+/mob/proc/handle_post_dropped(obj/item/I)
+	I.dropped_on_ground()
+
 
 /*
 	Removes the object from any slots the mob might have, calling the appropriate icon update proc.

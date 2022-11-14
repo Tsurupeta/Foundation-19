@@ -301,6 +301,10 @@
 		if(user.r_hand)
 			user.r_hand.update_twohanding()
 
+// called after the drop key is pressed (loc is already changed)
+/obj/item/proc/dropped_on_ground(mob/user)
+	return
+
 // called just as an item is picked up (loc is not yet changed)
 /obj/item/proc/pickup(mob/user)
 	return
