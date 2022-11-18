@@ -98,17 +98,17 @@
 
 //The base miss chance for the different defence zones
 var/list/global/base_miss_chance = list(
-	BP_HEAD =   50,
+	BP_HEAD =   65,
 	BP_CHEST =  10,
 	BP_GROIN =  15,
-	BP_L_ARM =  20,
-	BP_R_ARM =  20,
-	BP_L_HAND = 35,
-	BP_R_HAND = 35,
-	BP_L_LEG =  20,
-	BP_R_LEG =  20,
-	BP_L_FOOT = 35,
-	BP_R_FOOT = 35,
+	BP_L_ARM =  30,
+	BP_R_ARM =  30,
+	BP_L_LEG =  30,
+	BP_R_LEG =  30,
+	BP_L_FOOT = 80,
+	BP_R_FOOT = 80,
+	BP_L_HAND = 80,
+	BP_R_HAND = 80,
 )
 
 //Used to weight organs when an organ is hit randomly (i.e. not a directed, aimed attack).
@@ -184,14 +184,12 @@ var/list/global/organ_rel_size = list(
 	var/miss_chance = 10
 	if(zone in base_miss_chance)
 		miss_chance = base_miss_chance[zone]
-	miss_chance = max(miss_chance + miss_chance_mod, 0)
+	miss_chance = clamp(miss_chance + miss_chance_mod, 0, 90)
 	if(prob(miss_chance))
-		return null
-	else
-		if(prob(miss_chance))
-			return (ran_zone())
-		else
-			return zone
+		if(prob(miss_chance / 2))
+			return null
+		return ran_zone()
+	return zone
 
 //Replaces some of the characters with *, used in whispers. pr = probability of no star.
 //Will try to preserve HTML formatting. re_encode controls whether the returned text is HTML encoded outside tags.
