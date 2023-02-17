@@ -695,6 +695,21 @@ var/failed_old_db_connections = 0
 
 	return .
 
+/proc/prof_init()
+	var/lib
+
+	switch(world.system_type)
+		if(MS_WINDOWS) lib = "prof.dll"
+		if(UNIX) lib = "libprof.so"
+		else CRASH("unsupported platform")
+
+	var/init = call(lib, "init")()
+	if("0" != init) CRASH("[lib] init error: [init]")
+
+/world/New()
+	prof_init()
+	. = ..()
+
 //This proc ensures that the connection to the feedback database (global variable dbcon) is established
 /proc/establish_old_db_connection()
 	if(failed_old_db_connections > FAILED_DB_CONNECTION_CUTOFF)
