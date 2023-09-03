@@ -2474,9 +2474,6 @@
 	name = "ULCZ Maintenance";
 	req_access = list("ACCESS_SECURITY_LEVEL1")
 	},
-/obj/machinery/atmospherics/pipe/simple/hidden/supply{
-	dir = 4
-	},
 /obj/machinery/door/firedoor,
 /obj/structure/cable/green{
 	d1 = 4;
@@ -6988,9 +6985,6 @@
 	},
 /obj/machinery/atmospherics/pipe/simple/visible/green{
 	dir = 4
-	},
-/obj/machinery/atmospherics/pipe/simple/hidden/black{
-	dir = 1
 	},
 /turf/simulated/floor/tiled/monotile,
 /area/site53/engineering/atmos)
@@ -17153,9 +17147,6 @@
 	icon_state = "4-8"
 	},
 /obj/machinery/atmospherics/pipe/simple/hidden/supply{
-	dir = 4
-	},
-/obj/machinery/atmospherics/pipe/simple/hidden/scrubbers{
 	dir = 4
 	},
 /obj/machinery/door/airlock/external/glass/bolted/cycling{
